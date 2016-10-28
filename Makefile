@@ -51,6 +51,7 @@ MODULES=\
   src/embedded\
   src/parser\
   src/parsing\
+  src/graphql\
   src/server\
   src/services/autocomplete\
   src/services/inference\
