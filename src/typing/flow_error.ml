@@ -118,7 +118,9 @@ type error_message =
   | EGraphqlTypeNotFound of reason * string
   | EGraphqlFieldNotFound of reason * string
   | EGraphqlNonObjSelect of reason * string
-  | EGraphqlSubType of reason * string * string
+  | EGraphqlObjNeedSelect of reason * string
+  | EGraphqlUnionSelect of reason * string
+  | EGraphqlIncompatibleSpread of reason * string * string
 
 and binding_error =
   | ENameAlreadyBound
@@ -1076,7 +1078,22 @@ let rec error_of_msg ~trace_reasons ~op ~source_file =
           spf "Cannot select on non-object type `%s`" type_name
         ]]
 
-    | EGraphqlSubType (reason, sub, sup) ->
+    | EGraphqlObjNeedSelect (reason, type_name) ->
         mk_error [mk_info reason [
-          spf "`%s` is not a subtype of `%s`" sub sup
+          spf "Field of object type `%s` requires selection" type_name
+        ]]
+
+    | EGraphqlUnionSelect (reason, union_name) ->
+        mk_error [mk_info reason [
+          spf "Selection on union `%s` can only contain fragment spreads"
+            union_name
+        ]]
+
+    | EGraphqlIncompatibleSpread (reason, parent, frag) ->
+        mk_error [mk_info reason [
+          spf
+            "Fragment cannot be spread here as objects of type `%s` can never \
+             be of type `%s`"
+            parent
+            frag
         ]]
