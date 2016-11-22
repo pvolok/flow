@@ -117,6 +117,7 @@ type error_message =
   | EGraphqlObjNeedSelect of reason * string
   | EGraphqlUnionSelect of reason * string
   | EGraphqlIncompatibleSpread of reason * string * string
+  | EGraphqlFragOnNonComposite of reason * string
 
 and binding_error =
   | ENameAlreadyBound
@@ -1035,4 +1036,9 @@ let rec error_of_msg cx ~trace_reasons =
              be of type `%s`"
             parent
             frag
+        ]]
+
+    | EGraphqlFragOnNonComposite (reason, type_name) ->
+        mk_error [mk_info reason [
+          spf "Fragment cannot condition on non composite type `%s`" type_name
         ]]
