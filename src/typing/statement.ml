@@ -4973,7 +4973,7 @@ and graphql_definition cx def =
       ))
     )
   | Graphql_ast.Definition.Operation { Graphql_ast.OperationDef.
-      operation;
+      operation = (_, operation);
       selectionSet;
       _;
     } ->
