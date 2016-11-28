@@ -20,3 +20,5 @@ val init :
   options: Options.t ->
   string list ->
   (Loc.filename * bool * Errors.ErrorSet.t * Errors.ErrorSuppressions.t) list
+
+val init_graphql : Options.t -> unit

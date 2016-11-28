@@ -96,6 +96,8 @@ type t = {
   refs_table: (Loc.t, Loc.t) Hashtbl.t;
 
   mutable declare_module_t: Type.t option;
+
+  mutable graphql_config: Graphql_config.inst option;
 }
 
 and module_kind =
@@ -167,6 +169,8 @@ let make metadata file module_name = {
   refs_table = Hashtbl.create 0;
 
   declare_module_t = None;
+
+  graphql_config = None;
 }
 
 (* accessors *)
@@ -223,6 +227,8 @@ let type_table cx = cx.type_table
 let verbose cx = cx.metadata.verbose
 let max_workers cx = cx.metadata.max_workers
 let jsx cx = cx.metadata.jsx
+
+let graphql_config cx = cx.graphql_config
 
 let pid_prefix cx =
   if max_workers cx > 0
@@ -291,6 +297,8 @@ let set_type_graph cx type_graph =
   cx.type_graph <- type_graph
 let set_tvar cx id node =
   cx.graph <- IMap.add id node cx.graph
+let set_graphql_config cx (config: Graphql_config.inst option) =
+  cx.graphql_config <- config
 
 let clear_intermediates cx =
   Hashtbl.clear cx.type_table;
@@ -350,3 +358,5 @@ let merge_into cx cx_other =
   set_all_unresolved cx (IMap.union (all_unresolved cx_other) (all_unresolved cx));
   set_globals cx (SSet.union (globals cx_other) (globals cx));
   set_graph cx (IMap.union (graph cx_other) (graph cx));
+  if cx_other.graphql_config <> None then
+    set_graphql_config cx cx_other.graphql_config

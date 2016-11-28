@@ -82,7 +82,7 @@ module Opts = struct
     shm_hash_table_pow: int;
     shm_log_level: int;
     version: string option;
-    graphql_schema: string option;
+    graphql_config: string option;
   }
 
   type _initializer =
@@ -185,7 +185,7 @@ module Opts = struct
     shm_hash_table_pow = 19;
     shm_log_level = 0;
     version = None;
-    graphql_schema = None;
+    graphql_config = None;
   }
 
   let parse =
@@ -789,12 +789,12 @@ let parse_options config lines =
       );
     }
 
-    |> define_opt "graphql_schema" {
+    |> define_opt "graphql_config" {
       _initializer = USE_DEFAULT;
       flags = [];
       optparser = optparse_string;
       setter = (fun opts v ->
-        {opts with graphql_schema = Some v;}
+        {opts with graphql_config = Some v;}
       );
     }
 
