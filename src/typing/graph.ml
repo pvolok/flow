@@ -193,6 +193,7 @@ and parts_of_t cx = function
 | GraphqlFragT _ -> []
 | GraphqlOpT _ -> []
 | GraphqlSchemaT _ -> []
+| GraphqlDataT _ -> []
 | GraphqlSelectionT _ -> []
 | IdxWrapper (_, inner) -> ["inner", Def inner]
 | InstanceT (_, static, super, implements,
@@ -312,6 +313,7 @@ and parts_of_use_t cx = function
 | GraphqlMkOpT (_, _, _, t) -> ["t", Def t]
 | GraphqlSelectT (_, _, t) -> ["t", Def t]
 | GraphqlSpreadT _ -> []
+| GraphqlToDataT _ -> []
 | GuardT (_, t, out) -> ["iftrue", Def t; "out", Def out]
 | HasOwnPropT _ -> []
 | IdxUnMaybeifyT (_, out) -> ["out", Def out]

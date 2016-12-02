@@ -333,6 +333,7 @@ let rec type_printer_impl ~size override enclosure cx t =
         "GraphQL: " ^ (print t)
 
     | GraphqlSchemaT _
+    | GraphqlDataT _
     | GraphqlSelectionT _
 
     | FunProtoCallT _
