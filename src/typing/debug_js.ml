@@ -313,7 +313,6 @@ and _json_of_t_impl json_cx t = Hh_json.(
       "type", _json_of_t json_cx t
     ]
 
-  | GraphqlSchemaT _
   | GraphqlDataT _
   | GraphqlOpT _
   | GraphqlFragT _
@@ -683,9 +682,6 @@ and _json_of_use_t_impl json_cx t = Hh_json.(
       ]
     ]
 
-  | GraphqlMkOpT _ -> []
-  | GraphqlMkFragT _ -> []
-  | GraphqlMkInlineFragT _ -> []
   | GraphqlSelectT _ -> []
   | GraphqlSpreadT _ -> []
   | GraphqlToDataT _ -> []
@@ -1353,7 +1349,6 @@ and dump_t_ (depth, tvars) cx t =
       (kid t2)) t
   | ReposT (_, arg)
   | ReposUpperT (_, arg) -> p ~extra:(kid arg) t
-  | GraphqlSchemaT _
   | GraphqlDataT _
   | GraphqlOpT _
   | GraphqlFragT _
@@ -1448,9 +1443,6 @@ and dump_use_t_ (depth, tvars) cx t =
       (propref prop)
       (kid ptype)) t
   | GetStaticsT (_, arg) -> p ~extra:(kid arg) t
-  | GraphqlMkFragT _ -> p t
-  | GraphqlMkInlineFragT _ -> p t
-  | GraphqlMkOpT _ -> p t
   | GraphqlSelectT _ -> p t
   | GraphqlSpreadT _ -> p t
   | GraphqlToDataT _ -> p t
