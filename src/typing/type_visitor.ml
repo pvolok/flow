@@ -167,8 +167,6 @@ class ['a] t = object(self)
   | ReposUpperT (_, t) ->
     self#type_ cx acc t
 
-  | GraphqlDataT (_, t) ->
-    self#type_ cx acc t
   | GraphqlOpT (_, { Graphql.op_selection; _ }) ->
     self#type_ cx acc op_selection
   | GraphqlFragT (_, { Graphql.frag_selection; _ }) ->
@@ -218,6 +216,8 @@ class ['a] t = object(self)
   | NonMaybeType -> acc
   | PropertyType _ -> acc
   | Bind t -> self#type_ cx acc t
+  | GraphqlData -> acc
+  | GraphqlVars -> acc
 
   method private use_type_ cx acc = function
   | UseT (_, t) ->
@@ -255,6 +255,7 @@ class ['a] t = object(self)
   | GraphqlSelectT _
   | GraphqlSpreadT _
   | GraphqlToDataT _
+  | GraphqlToVarsT _
   | GuardT (_, _, _)
   | HasOwnPropT (_, _)
   | IdxUnMaybeifyT _

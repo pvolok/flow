@@ -325,7 +325,6 @@ and _json_of_t_impl json_cx t = Hh_json.(
       "type", _json_of_t json_cx t
     ]
 
-  | GraphqlDataT _
   | GraphqlOpT _
   | GraphqlFragT _
   | GraphqlSelectionT _
@@ -740,6 +739,7 @@ and _json_of_use_t_impl json_cx t = Hh_json.(
   | GraphqlSelectT _ -> []
   | GraphqlSpreadT _ -> []
   | GraphqlToDataT _ -> []
+  | GraphqlToVarsT _ -> []
   )
 )
 
@@ -979,6 +979,8 @@ and json_of_destructor_impl json_cx = Hh_json.(function
   | Bind t -> JSON_Object [
       "thisType", _json_of_t json_cx t
     ]
+  | GraphqlData -> JSON_Null
+  | GraphqlVars -> JSON_Null
 )
 
 and json_of_polarity_map json_cx = check_depth json_of_polarity_map_impl json_cx
@@ -1394,6 +1396,8 @@ and dump_t_ (depth, tvars) cx t =
     | NonMaybeType -> "non-maybe type"
     | PropertyType x -> spf "property type `%s`" x
     | Bind _ -> "bind"
+    | GraphqlData -> "graphql data"
+    | GraphqlVars -> "graphql vars"
     in
     fun expr t -> match expr with
     | DestructuringT (_, selector) ->
@@ -1531,7 +1535,6 @@ and dump_t_ (depth, tvars) cx t =
       (kid t2)) t
   | ReposT (_, arg)
   | ReposUpperT (_, arg) -> p ~extra:(kid arg) t
-  | GraphqlDataT _
   | GraphqlOpT _
   | GraphqlFragT _
   | GraphqlSelectionT _
@@ -1697,6 +1700,7 @@ and dump_use_t_ (depth, tvars) cx t =
   | GraphqlSelectT _ -> p t
   | GraphqlSpreadT _ -> p t
   | GraphqlToDataT _ -> p t
+  | GraphqlToVarsT _ -> p t
   | GuardT (pred, result, sink) -> p ~reason:false
       ~extra:(spf "%s, %s, %s"
         (string_of_predicate pred) (kid result) (kid sink))
@@ -1907,6 +1911,8 @@ let string_of_destructor = function
   | NonMaybeType -> "NonMaybeType"
   | PropertyType x -> spf "PropertyType %s" x
   | Bind _ -> "Bind"
+  | GraphqlData -> "GraphqlData"
+  | GraphqlVars -> "GraphqlVars"
 
 let string_of_default = Default.fold
   ~expr:(fun (loc, _) ->
