@@ -119,6 +119,9 @@ type error_message =
   | EGraphqlIncompatibleSpread of reason * string * string
   | EGraphqlFragOnNonComposite of Loc.t * string
   | EGraphqlUndefOp of Loc.t * string
+  | EGraphqlDoubleNonNull of Loc.t
+  | EGraphqlNotInputType of Loc.t * string
+  | EGraphqlVarRedef of Loc.t * string
 
 and binding_error =
   | ENameAlreadyBound
@@ -1044,3 +1047,12 @@ let rec error_of_msg cx ~trace_reasons =
 
     | EGraphqlUndefOp (loc, op_name) ->
         mk_error [loc, [spf "Schema is not configured for %ss" op_name]]
+
+    | EGraphqlDoubleNonNull loc ->
+        mk_error [loc, ["This type is already non-null"]]
+
+    | EGraphqlNotInputType (loc, type_name) ->
+        mk_error [loc, [spf "Type `%s` is not a correct input type" type_name]]
+
+    | EGraphqlVarRedef (loc, name) ->
+        mk_error [loc, [spf "There can be only one variable named `%s`" name]]
