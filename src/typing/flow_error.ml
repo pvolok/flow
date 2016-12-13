@@ -122,6 +122,7 @@ type error_message =
   | EGraphqlDoubleNonNull of Loc.t
   | EGraphqlNotInputType of Loc.t * string
   | EGraphqlVarRedef of Loc.t * string
+  | EGraphqlCustom of Loc.t * string
 
 and binding_error =
   | ENameAlreadyBound
@@ -1056,3 +1057,5 @@ let rec error_of_msg cx ~trace_reasons =
 
     | EGraphqlVarRedef (loc, name) ->
         mk_error [loc, [spf "There can be only one variable named `%s`" name]]
+
+    | EGraphqlCustom (loc, msg) -> mk_error [loc, [msg]]
