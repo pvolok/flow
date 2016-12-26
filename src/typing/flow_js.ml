@@ -5380,9 +5380,8 @@ let rec __flow cx ((l: Type.t), (u: Type.use_t)) trace =
       GraphqlSelectT (_, (Graphql.SelectField (GraphqlFieldT (_, field))), out)
       ->
       let { Graphql.s_selections; _ } = selection in
-      let ctx = (cx, rec_flow cx trace, mk_tvar cx) in
       let selections = SMap.map (fun props ->
-        Graphql_flow.add_field ctx props field
+        Graphql_flow.add_field gql cx ~trace props field
       ) s_selections in
       let selection = GraphqlSelectionT (
         reason,
@@ -5415,10 +5414,10 @@ let rec __flow cx ((l: Type.t), (u: Type.use_t)) trace =
       GraphqlSpreadT (_, GraphqlSelectionT (r, s), out)
       ->
       let {Graphql.s_selections = curr; _} = s in
-      let ctx = (cx, rec_flow cx trace, mk_tvar cx) in
       let selections = SMap.mapi (fun type_name props ->
         if SMap.mem type_name adds then
-          Graphql_flow.merge_fields ctx props (SMap.find type_name adds)
+          Graphql_flow.merge_fields
+            gql cx ~trace props (SMap.find type_name adds)
         else
           props
       ) curr in
@@ -9828,6 +9827,23 @@ and react_kit =
     ~mk_tvar
     ~eval_destructor
     ~sealed_in_op
+
+(* Modules Flow_js and Graphql_flow are mutually recursive. I don't know how to
+ * implement that without wrapping Flow_js with a functor. So I just always
+ * pass this record with functions. *)
+and gql =
+  let add_output cx ?trace msg =
+    match trace with
+    | Some trace -> add_output cx trace msg
+    | None -> FlowError.add_output cx msg
+  in
+  { Graphql_flow.
+    flow = flow_opt;
+    flow_t = flow_opt_t;
+    add_output;
+    mk_tvar;
+    mk_tvar_where;
+  }
 
 (************* end of slab **************************************************)
 
