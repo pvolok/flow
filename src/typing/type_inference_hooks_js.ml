@@ -26,6 +26,8 @@ let ref_nop _ _ _ = ()
 
 let graphql_field_nop _ _ _ _ = false
 
+let graphql_type_nop _ _ _ _ = false
+
 (* This type represents the possible definition-points for an lvalue. *)
 type rhs_def =
   (**
@@ -108,8 +110,13 @@ type hook_state_t = {
        unit);
 
   graphql_field_hook:
-      (Context.t ->
-       string -> Loc.t -> Type.t ->
+      (Graphql_schema.t ->
+       string -> Loc.t -> string ->
+       bool);
+
+  graphql_type_hook:
+      (Graphql_schema.t ->
+       string -> Loc.t -> string option ->
        bool);
 }
 
@@ -123,6 +130,7 @@ let nop_hook_state = {
   jsx_hook = jsx_nop;
   ref_hook = ref_nop;
   graphql_field_hook = graphql_field_nop;
+  graphql_type_hook = graphql_type_nop;
 }
 
 let hook_state = ref nop_hook_state
@@ -154,6 +162,9 @@ let set_ref_hook hook =
 let set_graphql_field_hook hook =
   hook_state := { !hook_state with graphql_field_hook = hook }
 
+let set_graphql_type_hook hook =
+  hook_state := { !hook_state with graphql_type_hook = hook }
+
 let reset_hooks () =
   hook_state := nop_hook_state
 
@@ -181,5 +192,8 @@ let dispatch_jsx_hook cx name loc this_t =
 let dispatch_ref_hook cx loc =
     !hook_state.ref_hook cx loc
 
-let dispatch_graphql_field_hook cx name loc selection =
-  !hook_state.graphql_field_hook cx name loc selection
+let dispatch_graphql_field_hook schema name loc type_name =
+  !hook_state.graphql_field_hook schema name loc type_name
+
+let dispatch_graphql_type_hook schema name loc parent_type =
+  !hook_state.graphql_type_hook schema name loc parent_type
