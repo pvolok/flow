@@ -4651,7 +4651,23 @@ let rec __flow cx ((l: Type.t), (u: Type.use_t)) trace =
     (* GraphQL *)
     (***********)
 
-    | GraphqlFragT (_, {Graphql.frag_selection; _}), GraphqlToDataT _ ->
+    | GraphqlFragT (_, {Graphql.frag_selection; frag_directives; _}),
+      GraphqlToDataT (r, out) ->
+      let is_relay_plural {Graphql.dir_name; dir_args} =
+        if dir_name = "relay" then
+          match SMap.get "plural" dir_args with
+          | Some Graphql_schema.Value.Bool true -> true
+          | _ -> false
+        else false
+      in
+      let arr = List.exists is_relay_plural frag_directives in
+      let u =
+        if arr then begin
+          let t = mk_tvar cx r in
+          rec_flow_t cx trace (ArrT (r, t, []), out);
+          GraphqlToDataT (r, t)
+        end else u
+      in
       rec_flow cx trace (frag_selection, u)
 
     | GraphqlSelectionT (r, {Graphql.s_selections; _}),

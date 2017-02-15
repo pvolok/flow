@@ -32,13 +32,40 @@ let conv_fields fields =
     SMap.add name field map
   ) SMap.empty fields
 
+let conv_dir_locations locs =
+  List.fold_left (fun acc (_, loc_name) ->
+    let open Schema.Directive in
+    match loc_name with
+    | "QUERY" -> Query :: acc
+    | "MUTATION" -> Mutation :: acc
+    | "SUBSCRIPTION" -> Subscription :: acc
+    | "FIELD" -> Field :: acc
+    | "FRAGMENT_DEFINITION" -> FragmentDef :: acc
+    | "FRAGMENT_SPREAD" -> FragmentSpread :: acc
+    | "INLINE_FRAGMENT" -> InlineFragment :: acc
+    | "SCHEMA" -> Schema :: acc
+    | "SCALAR" -> Scalar :: acc
+    | "OBJECT" -> Object :: acc
+    | "FIELD_DEFINITION" -> FieldDef :: acc
+    | "ARGUMENT_DEFINITION" -> ArgDef :: acc
+    | "INTERFACE" -> Interface :: acc
+    | "UNION" -> Union :: acc
+    | "ENUM" -> Enum :: acc
+    | "ENUM_VALUE" -> EnumValue :: acc
+    | "INPUT_OBJECT" -> InputObject :: acc
+    | "INPUT_FIELD_DEFINITION" -> InputFieldDef :: acc
+    | _ -> acc
+  ) [] locs
+
 let schema_from_ast scalar_kinds doc =
   let query = ref None in
   let mutation = ref None in
   let subscription = ref None in
   let type_map = ref SMap.empty in
+  let dir_map = ref SMap.empty in
 
   let add_type name type_ = type_map := SMap.add name type_ !type_map in
+  let add_directive name dir = dir_map := SMap.add name dir !dir_map in
 
   let consume_def def =
     let module Def = Ast.Definition in
@@ -89,7 +116,18 @@ let schema_from_ast scalar_kinds doc =
       } ->
         add_type name (Schema.Type.InputObj (name, conv_input_vals fields))
     | Def.TypeExtension _ -> () (* TODO *)
-    | Def.Directive _ -> () (* TODO *)
+    | Def.Directive {
+        Ast.DirectiveDef.name = (_, name);
+        arguments;
+        locations;
+        loc = _;
+      } ->
+        let dir = {
+          Schema.Directive.name = name;
+          args = conv_input_vals arguments;
+          locations = conv_dir_locations locations;
+        } in
+        add_directive name dir
     | Def.Schema obj ->
         List.iter (fun t ->
           let typeRef =
@@ -135,4 +173,5 @@ let schema_from_ast scalar_kinds doc =
     mutation_name = !mutation;
     subscription_name = !subscription;
     type_map = !type_map;
+    directive_map = !dir_map;
   })

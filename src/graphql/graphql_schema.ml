@@ -36,6 +36,50 @@ and InputVal: sig
   }
 end = InputVal
 
+and Value : sig
+  type t =
+    | Invalid
+    | Variable of string
+    | Int of int
+    | Float of string
+    | String of string
+    | Bool of bool
+    | Null
+    | Enum of string
+    | List of Value.t list
+    | Object of Value.t SMap.t
+end = Value
+
+and Directive: sig
+  type location =
+    (* Operations *)
+    | Query
+    | Mutation
+    | Subscription
+    | Field
+    | FragmentDef
+    | FragmentSpread
+    | InlineFragment
+    (* Schema definitions *)
+    | Schema
+    | Scalar
+    | Object
+    | FieldDef
+    | ArgDef
+    | Interface
+    | Union
+    | Enum
+    | EnumValue
+    | InputObject
+    | InputFieldDef
+
+  type t = {
+    name: string;
+    args: InputVal.t SMap.t;
+    locations: location list;
+  }
+end = Directive
+
 type operation =
   | Query
   | Mutation
@@ -46,6 +90,7 @@ type t = {
   mutation_name: string option;
   subscription_name: string option;
   type_map: Type.def SMap.t;
+  directive_map: Directive.t SMap.t;
 }
 
 let typename_field = { Field.
@@ -99,13 +144,6 @@ let find_field s type_name field_name =
 let find_field_type s type_name field_name =
   (find_field s type_name field_name).Field.type_
 
-let get_arg_type _s field arg_name =
-  let args = field.Field.args in
-  if SMap.mem arg_name args then
-    let arg = SMap.find arg_name args in
-    Some arg.InputVal.type_
-  else None
-
 let obj_field_types s type_name =
   match type_def s type_name with
   | Type.Obj (_, fields, _) ->
@@ -153,3 +191,6 @@ let rec string_of_type_ref = function
   | Type.Named n -> n
   | Type.List t -> "[" ^ (string_of_type_ref t) ^ "]"
   | Type.NonNull t -> (string_of_type_ref t) ^ "!"
+
+let get_directive s name =
+  SMap.get name s.directive_map

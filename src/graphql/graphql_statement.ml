@@ -38,6 +38,7 @@ and do_definition cx schema def =
   | Ast.Definition.Fragment { Ast.FragmentDef.
       typeCondition = (type_loc, type_name);
       selectionSet;
+      directives;
       loc;
       _
     } ->
@@ -51,6 +52,7 @@ and do_definition cx schema def =
         frag_schema = schema;
         frag_type = type_name;
         frag_selection = selection;
+        frag_directives = do_directives cx gcx schema directives;
       } in
       GraphqlFragT (reason, frag)
     else
@@ -181,6 +183,7 @@ and select cx gcx schema selection type_name selections =
         name = (floc, fname);
         args;
         selectionSet;
+        directives;
         _
       } ->
       if Type_inference_hooks_js.dispatch_graphql_field_hook
@@ -193,9 +196,10 @@ and select cx gcx schema selection type_name selections =
           let field_type =
             Schema.find_field_type schema type_name fname in
           let _fields_args =
+            let field_def = (Schema.find_field schema type_name fname) in
+            let args_def = field_def.Schema.Field.args in
             let args = Option.value args ~default:[] in
-            do_field_args cx gcx schema
-              (Schema.find_field schema type_name fname) floc args
+            do_args cx gcx schema args_def floc args
           in
           let field_selection = do_field_selection
               cx gcx schema
@@ -207,6 +211,7 @@ and select cx gcx schema selection type_name selections =
             sf_name = fname;
             sf_type = field_type;
             sf_selection = field_selection;
+            sf_directives = do_directives cx gcx schema directives;
           } in
           let field = GraphqlFieldT (reason, field) in
           Hashtbl.replace (Context.type_table cx) floc field;
@@ -230,6 +235,7 @@ and select cx gcx schema selection type_name selections =
         typeCondition;
         selectionSet;
         loc = frag_loc;
+        directives;
         _;
       }
       ->
@@ -242,6 +248,7 @@ and select cx gcx schema selection type_name selections =
           frag_schema = schema;
           frag_type;
           frag_selection = mk_selection cx gcx schema frag_type selectionSet;
+          frag_directives = do_directives cx gcx schema directives;
         } in
         Flow.mk_tvar_where cx (reason_of_t selection) (fun t ->
           let frag = Graphql.SelectFrag (GraphqlFragT (reason, frag)) in
@@ -293,7 +300,7 @@ and do_field_selection cx gcx schema type_name loc selection_set =
   (* scalar *)
   | None -> None
 
-and do_field_args cx gcx schema field field_loc args =
+and do_args cx gcx schema args_def field_loc args =
   let args_map = List.fold_left (fun map arg ->
     let {Ast.Argument.name = (_, name); _} = arg in
     SMap.add name arg map
@@ -303,29 +310,34 @@ and do_field_args cx gcx schema field field_loc args =
     | Schema.Type.NonNull _ when not (SMap.mem name args_map) ->
       err cx field_loc (spf "Missings required argument `%s`" name)
     | _ -> ()
-  ) field.Schema.Field.args;
+  ) args_def;
   List.fold_left (fun map {Ast.Argument.name = (loc, name); value; _} ->
-    match Schema.get_arg_type schema field name with
-    | Some arg_type ->
-      do_value cx gcx schema arg_type value;
+    if SMap.mem name args_def then (
+      let arg_type = (SMap.find name args_def).Schema.InputVal.type_ in
+      let v = do_value cx gcx schema arg_type value in
+      SMap.add name v map
+    ) else (
+      err cx loc (spf "Argument `%s` is not found" name);
       map
-    | None ->
-      err cx loc (spf "Field does not have argument `%s`" name);
-      map
+    )
   ) SMap.empty args
 
 and do_value cx gcx schema type_ value =
   let open Ast.Value in
   let module Ast = Ast in
+  let module Val = Schema.Value in
   let type_name = Schema.type_name schema type_ in
-  let check_scalar loc input =
+  let err cx loc msg = err cx loc msg; Val.Invalid in
+  let check_scalar loc input mk_val =
     let err () =
       err cx loc
         (spf "This value expected to be of type `%s`" type_name)
     in
     match Schema.type_def schema type_name with
     | Schema.Type.Scalar (_, kind) ->
-      if not (Schema.can_convert_to input kind) then err ()
+      if Schema.can_convert_to input kind
+      then mk_val ()
+      else err ()
     | _ -> err ()
   in
   match value with
@@ -333,22 +345,26 @@ and do_value cx gcx schema type_ value =
   | IntValue (loc, str) ->
     begin
       try
-        Int32.of_string str |> Int32.to_int |> ignore;
-        check_scalar loc Schema.Type.Int
+        let value = Int32.of_string str |> Int32.to_int in
+        check_scalar loc Schema.Type.Int (fun () -> Val.Int value)
       with _ -> err cx loc "This is not a valid int32 value"
     end
-  | FloatValue (loc, _) -> check_scalar loc Schema.Type.Float
-  | StringValue (loc, _) -> check_scalar loc Schema.Type.Str
-  | BooleanValue (loc, _) -> check_scalar loc Schema.Type.Bool
+  | FloatValue (loc, v) ->
+      check_scalar loc Schema.Type.Float (fun () -> Val.Float v)
+  | StringValue (loc, v) ->
+      check_scalar loc Schema.Type.Str (fun () -> Val.String v)
+  | BooleanValue (loc, v) ->
+      check_scalar loc Schema.Type.Bool (fun () -> Val.Bool v)
   | NullValue loc ->
     begin match type_ with
     | Schema.Type.NonNull _ -> err cx loc "can't be null"
-    | _ -> ()
+    | _ -> Val.Null
     end
   | EnumValue (loc, value) ->
     begin match Schema.type_def schema type_name with
     | Schema.Type.Enum (_, values) ->
-      if not (List.exists ((=) value) values) then
+      if List.exists ((=) value) values then (Val.Enum value)
+      else
         err cx loc
           (spf "This value expected to be of enum type `%s`" type_name)
     | _ ->
@@ -362,7 +378,7 @@ and do_value cx gcx schema type_ value =
           (spf "This value expected to be of type `%s`, found list instead"
              type_name)
       | Schema.Type.List t ->
-        List.iter (do_value cx gcx schema t) items
+        Val.List (List.map (do_value cx gcx schema t) items)
       | Schema.Type.NonNull t -> check_list t
     ) in
     check_list type_
@@ -370,8 +386,14 @@ and do_value cx gcx schema type_ value =
     begin match Schema.type_def schema type_name with
     | Schema.Type.InputObj (_, field_defs) ->
       let fields_map = List.fold_left (fun map field ->
-        let {Ast.ObjectField.name = (_, name); value; _} = field in
-        SMap.add name value map
+        let {Ast.ObjectField.name = (loc, name); value; _} = field in
+        let v = match SMap.get name field_defs with
+          | Some {Schema.InputVal.type_ = field_type; _} ->
+            do_value cx gcx schema field_type value
+          | None ->
+            err cx loc (spf "Field `%s` is not found in `%s`" name type_name)
+        in
+        SMap.add name v map
       ) SMap.empty fields in
       SMap.iter (fun field_name field_type ->
         let missing =
@@ -383,28 +405,27 @@ and do_value cx gcx schema type_ value =
         if missing then
           err cx loc
             (spf "Missing required field `%s` in object of type `%s`"
-               field_name type_name)
+               field_name type_name) |> ignore
       ) field_defs;
-      List.iter (fun {Ast.ObjectField.name = (loc, name); value; _} ->
-        match SMap.get name field_defs with
-        | Some {Schema.InputVal.type_ = field_type; _} ->
-          do_value cx gcx schema field_type value
-        | None ->
-          err cx loc
-            (spf "Field `%s` is not found in `%s`" name type_name)
-      ) fields
-    | _ -> err cx loc "This value expected to be an input object"
+      Val.Object fields_map
+    | _ ->
+      err cx loc "This value expected to be an input object"
     end
 
-and do_var cx gcx loc name type_ =
+and do_var cx gcx loc name type_: Schema.Value.t =
+  let mk_val () = Schema.Value.Variable name in
   if SMap.mem name gcx.vars
-  then vars_compatible cx loc (SMap.find name gcx.vars) type_
+  then vars_compatible cx loc (SMap.find name gcx.vars) type_ mk_val
   else if gcx.infer_vars then (
     let new_vars = SMap.add name type_ gcx.vars in
-    gcx.vars <- new_vars
-  ) else (err cx loc (spf "Variable `%s` in not declared" name))
+    gcx.vars <- new_vars;
+    mk_val ()
+  ) else (
+    err cx loc (spf "Variable `%s` in not declared" name);
+    Schema.Value.Invalid
+  )
 
-and vars_compatible cx loc t1 t2 =
+and vars_compatible cx loc t1 t2 mk_val =
   let module T = Schema.Type in
   let rec check t1 t2 =
     match t1, t2 with
@@ -414,13 +435,30 @@ and vars_compatible cx loc t1 t2 =
     | _, _ -> false
   in
   let valid = check t1 t2 in
-  if not valid then (
+  if valid then mk_val ()
+  else (
     let t_exp = Schema.string_of_type_ref t1 in
     let t_real = Schema.string_of_type_ref t2 in
     err cx loc
       (spf "Expected variable of type `%s`, but got `%s`" t_exp t_real);
-  );
-  ()
+    Schema.Value.Invalid
+  )
+
+and do_directives cx gcx schema = function
+  | Some directives ->
+    List.fold_left (fun acc directive ->
+      let {Ast.Directive.name = (_, name); arguments; loc} = directive in
+      match Schema.get_directive schema name with
+      | Some dir_def ->
+        let args_def = dir_def.Schema.Directive.args in
+        let args = Option.value arguments ~default:[] in
+        let dir_args = do_args cx gcx schema args_def loc args in
+        {Graphql.dir_name = name; dir_args} :: acc
+      | None ->
+        err cx loc (spf "Directive `%s` is not defined in the schema" name);
+        acc
+    ) [] directives
+  | None -> []
 
 and err cx loc msg =
   Flow_error.(add_output cx (EGraphqlCustom (loc, msg)))

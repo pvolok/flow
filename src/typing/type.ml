@@ -1267,6 +1267,11 @@ end = struct
 end
 
 and Graphql : sig
+  type directive = {
+    dir_name: string;
+    dir_args: Graphql_schema.Value.t SMap.t;
+  }
+
   type op = {
     op_schema: Graphql_schema.t;
     op_type: Graphql_schema.operation;
@@ -1280,6 +1285,7 @@ and Graphql : sig
     sf_name: string;
     sf_type: Graphql_schema.Type.t;
     sf_selection: TypeTerm.t option;
+    sf_directives: directive list;
   }
 
   and selection = {
@@ -1292,6 +1298,7 @@ and Graphql : sig
     frag_schema: Graphql_schema.t;
     frag_type: string;
     frag_selection: TypeTerm.t;
+    frag_directives: directive list;
   }
 
   type select_type =
