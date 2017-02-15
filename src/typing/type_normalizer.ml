@@ -470,11 +470,16 @@ let rec normalize_type_impl cx ids t = match t with
       locationless_reason (RCustom ("GraphQL operation")),
       { Graphql.op_schema; op_type; op_vars; op_selection }
     )
-  | GraphqlFragT (_, { Graphql.frag_schema; frag_type; frag_selection }) ->
+  | GraphqlFragT (_, { Graphql.
+      frag_schema;
+      frag_type;
+      frag_selection;
+      frag_directives;
+    }) ->
     let frag_selection = normalize_type_impl cx ids frag_selection in
     GraphqlFragT (
       locationless_reason (RCustom ("Graphql fragment")),
-      { Graphql.frag_schema; frag_type; frag_selection }
+      { Graphql.frag_schema; frag_type; frag_selection; frag_directives }
     )
   | GraphqlSelectionT (_, { Graphql.s_schema; s_on; s_selections }) ->
     let map sf =

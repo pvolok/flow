@@ -104,7 +104,7 @@ let rec gc cx state = function
       gc cx state static  | MixedT _ -> ()
   | GraphqlOpT (_, { Graphql.op_schema = _; op_type = _; op_selection; _ }) ->
       gc cx state op_selection
-  | GraphqlFragT (_, { Graphql.frag_schema = _; frag_type = _; frag_selection })
+  | GraphqlFragT (_, { Graphql.frag_selection; _ })
       -> gc cx state frag_selection
   | GraphqlSelectionT (_, { Graphql.s_schema = _; s_on = _; s_selections }) ->
       let iter_fn _ { Graphql.sf_selection; _ } =
