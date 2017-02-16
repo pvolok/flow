@@ -47,7 +47,7 @@ and do_definition cx schema def =
     if Graphql_flow.check_frag_type flow cx schema type_name type_loc then
       let gcx = {vars = SMap.empty; infer_vars = true; relay_op = false} in
       let selection =
-        mk_selection cx gcx schema type_name selectionSet in
+        mk_selection cx gcx schema type_name false selectionSet in
       let frag = { Graphql.
         frag_schema = schema;
         frag_type = type_name;
@@ -90,7 +90,7 @@ and do_definition cx schema def =
         | None -> (SMap.empty, true)
       in
       let gcx = {vars; infer_vars; relay_op} in
-      let selection = mk_selection cx gcx schema type_name selectionSet in
+      let selection = mk_selection cx gcx schema type_name false selectionSet in
       let vars = gcx.vars in
       let operation = { Graphql.
         op_schema = schema;
@@ -160,7 +160,7 @@ and do_vars_decl cx schema var_defs =
   in
   vars
 
-and mk_selection cx gcx schema type_name selection_set =
+and mk_selection cx gcx schema type_name maybe selection_set =
   let {Ast.SelectionSet.selections; loc} = selection_set in
   let reason = mk_reason (RCustom (spf "selection on `%s`" type_name)) loc in
   let s_selections = SMap.from_keys
@@ -173,9 +173,10 @@ and mk_selection cx gcx schema type_name selection_set =
     s_selections;
   } in
   select
-    cx gcx schema (GraphqlSelectionT (reason, selection)) type_name selections
+    cx gcx schema (GraphqlSelectionT (reason, selection)) type_name maybe
+    selections
 
-and select cx gcx schema selection type_name selections =
+and select cx gcx schema selection type_name maybe selections =
   List.fold_left (fun selection item ->
     match item with
     | Ast.Selection.Field { Ast.Field.
@@ -201,17 +202,21 @@ and select cx gcx schema selection type_name selections =
             let args = Option.value args ~default:[] in
             do_args cx gcx schema args_def floc args
           in
+          let dirs = do_directives cx gcx schema directives in
+          let maybe = maybe || has_maybe_directive dirs in
           let field_selection = do_field_selection
               cx gcx schema
               (Schema.name_of_type field_type)
+              maybe
               floc selectionSet in
           let field = {
             Graphql.sf_schema = schema;
             sf_alias = Option.value_map alias ~default:fname ~f:(fun (_, x) -> x);
             sf_name = fname;
             sf_type = field_type;
+            sf_maybe = maybe;
             sf_selection = field_selection;
-            sf_directives = do_directives cx gcx schema directives;
+            sf_directives = dirs;
           } in
           let field = GraphqlFieldT (reason, field) in
           Hashtbl.replace (Context.type_table cx) floc field;
@@ -244,11 +249,14 @@ and select cx gcx schema selection type_name selections =
       if Graphql_flow.check_frag_type flow cx schema frag_type frag_type_loc
       then
         let reason = mk_reason (RCustom "inline fragment") frag_loc in
+        let dirs = do_directives cx gcx schema directives in
+        let maybe = maybe || has_maybe_directive dirs in
         let frag = { Graphql.
           frag_schema = schema;
           frag_type;
-          frag_selection = mk_selection cx gcx schema frag_type selectionSet;
-          frag_directives = do_directives cx gcx schema directives;
+          frag_selection =
+            mk_selection cx gcx schema frag_type maybe selectionSet;
+          frag_directives = dirs;
         } in
         Flow.mk_tvar_where cx (reason_of_t selection) (fun t ->
           let frag = Graphql.SelectFrag (GraphqlFragT (reason, frag)) in
@@ -275,11 +283,11 @@ and skim_selection_set cx gcx schema selection_set =
         _;
       } ->
       if Graphql_flow.check_frag_type flow cx schema type_name type_loc
-      then mk_selection cx gcx schema type_name selectionSet |> ignore
+      then mk_selection cx gcx schema type_name false selectionSet |> ignore
     | _ -> ()
   ) selection_set.Ast.SelectionSet.selections
 
-and do_field_selection cx gcx schema type_name loc selection_set =
+and do_field_selection cx gcx schema type_name maybe loc selection_set =
   let need_selection = Schema.Type.(
     match Schema.type_def schema type_name with
     | Obj _ | Interface _ | Union _ -> true
@@ -288,7 +296,7 @@ and do_field_selection cx gcx schema type_name loc selection_set =
   match selection_set with
   (* obj { ... } *)
   | Some selection_set when need_selection ->
-    Some (mk_selection cx gcx schema type_name selection_set)
+    Some (mk_selection cx gcx schema type_name maybe selection_set)
   (* scalar { ... } *)
   | Some {Ast.SelectionSet.loc; _} ->
     Flow_error.(add_output cx (EGraphqlNonObjSelect (loc, type_name)));
@@ -459,6 +467,11 @@ and do_directives cx gcx schema = function
         acc
     ) [] directives
   | None -> []
+
+and has_maybe_directive dirs =
+  List.exists (fun {Graphql.dir_name; _} ->
+    dir_name = "skip" || dir_name = "include"
+  ) dirs
 
 and err cx loc msg =
   Flow_error.(add_output cx (EGraphqlCustom (loc, msg)))

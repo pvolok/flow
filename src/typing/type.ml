@@ -1381,6 +1381,7 @@ and Graphql : sig
     sf_alias: string; (* alias or name *)
     sf_name: string;
     sf_type: Graphql_schema.Type.t;
+    sf_maybe: bool;
     sf_selection: TypeTerm.t option;
     sf_directives: directive list;
   }

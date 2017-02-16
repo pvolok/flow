@@ -81,13 +81,20 @@ let check_field_selection _field = true
 
 let merge_field flow cx ?trace f1 f2 = Graphql.(
   (* TODO: validate args *)
-  match f1.sf_selection, f2.sf_selection with
-  | Some s1, Some s2 ->
-    let reason = reason_of_t s2 in
-    let new_s = flow.mk_tvar cx (reason_of_t s1) in
-    flow.flow cx ?trace (s1, GraphqlSelectT (reason, SelectFrag s2, new_s));
-    { f1 with sf_selection = Some new_s }
-  | _ -> f1
+  let selection =
+    match f1.sf_selection, f2.sf_selection with
+    | Some s1, Some s2 ->
+      let reason = reason_of_t s2 in
+      let new_s = flow.mk_tvar cx (reason_of_t s1) in
+      flow.flow cx ?trace (s1, GraphqlSelectT (reason, SelectFrag s2, new_s));
+      Some new_s;
+    | (s, _) -> s
+  in
+  {
+    f1 with
+    sf_maybe = f1.sf_maybe && f2.sf_maybe;
+    sf_selection = selection;
+  }
 )
 
 let merge_fun flow cx ?trace _ f1 f2 =
