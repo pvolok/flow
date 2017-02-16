@@ -4702,7 +4702,13 @@ let rec __flow cx ((l: Type.t), (u: Type.use_t)) trace =
               mk_tvar_where cx reason_val (fun t ->
                 rec_flow cx trace (s, GraphqlToDataT (r, t))
               )
-            | None -> conv_type_ref reason_val type_
+            | None ->
+              let type_ =
+                match (field.Graphql.sf_maybe, type_) with
+                | (true, Graphql_schema.Type.NonNull t) -> t
+                | (_, t) -> t
+              in
+              conv_type_ref reason_val type_
           )
         in
         Property.field Neutral value

@@ -26,6 +26,12 @@ type Mutation {
   postMessage(msg: MessageInput!): ID!
 }
 
+directive @relay(plural: Boolean! = false) on FRAGMENT_DEFINITION
+
+directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
 schema {
   mutation: Mutation
 }
