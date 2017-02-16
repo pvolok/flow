@@ -1,0 +1,43 @@
+// @flow
+
+type Unwrap<T> = (() => T) => $GraphqlData<T>
+type FragmentsData<O> = $ObjMap<O, Unwrap<*>>;
+
+/*
+ * Relay.Mutation
+ */
+
+declare export class Mutation<Mutation, Frags> {
+  static fragments: Frags;
+  props: FragmentsData<Frags>;
+
+  getMutation(): Mutation;
+  getVariables():
+    $Subtype<
+      $Diff<
+        $PropertyType<$GraphqlVars<Mutation>, 'input'>,
+        {clientMutationId: string},
+      >
+    >;
+}
+
+/*
+ * Relay.createComponent
+ */
+
+type RelayProps = {
+  relay: {},
+};
+
+type RelayComponent<FragDefs> = Class<
+  React$Component<*, RelayProps & FragmentsData<FragDefs>, *>
+>;
+
+type UnwrapRef<T> = (() => T) => 'id';
+type RelayClass<FragDefs> = Class<
+  React$Component<void, $ObjMap<FragDefs, UnwrapRef<*>>, void>
+>;
+
+declare export function createComponent<Frags, Comp: RelayComponent<Frags>>(
+  Comp, {fragments: Frags},
+): RelayClass<Frags>;
