@@ -48,11 +48,13 @@ and do_definition cx schema def =
       let gcx = {vars = SMap.empty; infer_vars = true; relay_op = false} in
       let selection =
         mk_selection cx gcx schema type_name false selectionSet in
+      let dirs = do_directives
+        cx gcx schema Schema.Directive.FragmentDef directives in
       let frag = { Graphql.
         frag_schema = schema;
         frag_type = type_name;
         frag_selection = selection;
-        frag_directives = do_directives cx gcx schema directives;
+        frag_directives = dirs;
       } in
       GraphqlFragT (reason, frag)
     else
@@ -62,6 +64,7 @@ and do_definition cx schema def =
       operation = (op_loc, operation);
       selectionSet;
       variableDefs;
+      directives;
       loc;
       _;
     } = op_def in
@@ -70,11 +73,18 @@ and do_definition cx schema def =
       | Mutation -> Schema.Mutation
       | Subscription -> Schema.Subscription
     ) in
-    let (type_name, op_name) = Schema.(
+    let (type_name, op_name, dir_loc) = Schema.(
       match op_type with
-      | Query -> Some schema.Schema.query_name, "query"
-      | Mutation -> schema.Schema.mutation_name, "mutation"
-      | Subscription -> schema.Schema.subscription_name, "subscription"
+      | Query ->
+          Some schema.Schema.query_name, "query", Schema.Directive.Query
+      | Mutation ->
+          schema.Schema.mutation_name, "mutation", Schema.Directive.Mutation
+      | Subscription ->
+          (
+            schema.Schema.subscription_name,
+            "subscription",
+            Schema.Directive.Subscription
+          )
     ) in
     let reason = mk_reason (RCustom (spf "GraphQL `%s`" op_name)) loc in
     (match type_name with
@@ -92,6 +102,8 @@ and do_definition cx schema def =
       let gcx = {vars; infer_vars; relay_op} in
       let selection = mk_selection cx gcx schema type_name false selectionSet in
       let vars = gcx.vars in
+      let (_dirs: Graphql.directive list) =
+        do_directives cx gcx schema dir_loc directives in
       let operation = { Graphql.
         op_schema = schema;
         op_type;
@@ -202,7 +214,8 @@ and select cx gcx schema selection type_name maybe selections =
             let args = Option.value args ~default:[] in
             do_args cx gcx schema args_def floc args
           in
-          let dirs = do_directives cx gcx schema directives in
+          let dirs = do_directives
+            cx gcx schema Schema.Directive.Field directives in
           let maybe = maybe || has_maybe_directive dirs in
           let field_selection = do_field_selection
               cx gcx schema
@@ -249,7 +262,8 @@ and select cx gcx schema selection type_name maybe selections =
       if Graphql_flow.check_frag_type flow cx schema frag_type frag_type_loc
       then
         let reason = mk_reason (RCustom "inline fragment") frag_loc in
-        let dirs = do_directives cx gcx schema directives in
+        let dirs = do_directives
+          cx gcx schema Schema.Directive.InlineFragment directives in
         let maybe = maybe || has_maybe_directive dirs in
         let frag = { Graphql.
           frag_schema = schema;
@@ -452,16 +466,21 @@ and vars_compatible cx loc t1 t2 mk_val =
     Schema.Value.Invalid
   )
 
-and do_directives cx gcx schema = function
+and do_directives cx gcx schema allow_loc = function
   | Some directives ->
     List.fold_left (fun acc directive ->
       let {Ast.Directive.name = (_, name); arguments; loc} = directive in
       match Schema.get_directive schema name with
-      | Some dir_def ->
-        let args_def = dir_def.Schema.Directive.args in
-        let args = Option.value arguments ~default:[] in
-        let dir_args = do_args cx gcx schema args_def loc args in
-        {Graphql.dir_name = name; dir_args} :: acc
+      | Some { Schema.Directive.args = args_def; locations; _ } ->
+        if List.exists ((=) allow_loc) locations then (
+          let args = Option.value arguments ~default:[] in
+          let dir_args = do_args cx gcx schema args_def loc args in
+          {Graphql.dir_name = name; dir_args} :: acc
+        ) else (
+          err cx loc
+            (spf "Directive `%s` is not allowed in this location" name);
+          acc
+        )
       | None ->
         err cx loc (spf "Directive `%s` is not defined in the schema" name);
         acc
