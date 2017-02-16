@@ -1,0 +1,50 @@
+component.js:9
+  9:     this.props.user.kappa;
+         ^^^^^^^^^^^^^^^ property `user`. Property cannot be accessed on any member of intersection type
+  9:     this.props.user.kappa;
+         ^^^^^^^^^^ intersection
+  Member 1:
+   33:   React$Component<*, RelayProps & FragmentsData<FragDefs>, *>
+                            ^^^^^^^^^^ RelayProps. See: relay.js.flow:33
+  Error:
+    9:     this.props.user.kappa;
+                      ^^^^ property `user`. Property not found in
+   33:   React$Component<*, RelayProps & FragmentsData<FragDefs>, *>
+                            ^^^^^^^^^^ object type. See: relay.js.flow:33
+  Member 2:
+   33:   React$Component<*, RelayProps & FragmentsData<FragDefs>, *>
+                                         ^^^^^^^^^^^^^^^^^^^^^^^ type application of polymorphic type: type `FragmentsData`. See: relay.js.flow:33
+  Error:
+    9:     this.props.user.kappa;
+                           ^^^^^ property `kappa`. Property not found in
+    9:     this.props.user.kappa;
+           ^^^^^^^^^^^^^^^ selection on `Story`
+
+component.js:25
+ 25: <StatefullR />;
+     ^^^^^^^^^^^^^^ React element `StatefullR`
+ 38:   React$Component<void, $ObjMap<FragDefs, UnwrapRef<*>>, void>
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ property `user`. Property not found in. See: relay.js.flow:38
+ 25: <StatefullR />;
+     ^^^^^^^^^^^^^^ props of React element `StatefullR`
+
+mutation.js:16
+ 16:     this.props.story.aa; // not found
+                          ^^ property `aa`. Property not found in
+ 16:     this.props.story.aa; // not found
+         ^^^^^^^^^^^^^^^^ selection on `Story`
+
+mutation.js:17
+ 17:     return {storyID: 123}; // number ~> string
+                          ^^^ number. This type is incompatible with
+ 11:     return Relay.QL`mutation {likeStory(input: $input)}`; // `inc` not found in vars
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ string
+
+relay.js.flow:18
+ 18:         $PropertyType<$GraphqlVars<Mutation>, 'input'>,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ property `inc`. Property not found in
+ 17:     return {storyID: 123}; // number ~> string
+                ^^^^^^^^^^^^^^ object literal. See: mutation.js:17
+
+
+Found 5 errors
