@@ -36,9 +36,14 @@ mutation.js:16
 
 mutation.js:17
  17:     return {storyID: 123}; // number ~> string
-                          ^^^ number. This type is incompatible with
- 11:     return Relay.QL`mutation {likeStory(input: $input)}`; // `inc` not found in vars
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ string
+                ^^^^^^^^^^^^^^ object literal. This type is incompatible with
+ 18:         $PropertyType<$GraphqlVars<Mutation>, 'input'>,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ GraphQL `mutation`. See: relay.js.flow:18
+  Property `storyID` is incompatible:
+     17:     return {storyID: 123}; // number ~> string
+                              ^^^ number. This type is incompatible with
+     11:     return Relay.QL`mutation {likeStory(input: $input)}`; // `inc` not found in vars
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ string
 
 relay.js.flow:18
  18:         $PropertyType<$GraphqlVars<Mutation>, 'input'>,

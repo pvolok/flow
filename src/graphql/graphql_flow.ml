@@ -62,7 +62,7 @@ let rec conv_val_ ?non_null:(non_null=true) mk_obj schema reason value =
     wrap value
   | T.List t ->
     let t = conv_val_ mk_obj schema reason t in
-    wrap (ArrT (reason, t, []))
+    wrap (ArrT (reason, ArrayAT (t, None)))
   | T.NonNull t -> conv_val_ ~non_null:false mk_obj schema reason t
   
 

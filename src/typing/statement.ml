@@ -2932,7 +2932,7 @@ and expression_ ~is_cond cx loc e = Ast.Expression.(match e with
       let ast = Graphql_parse.parse_tpl quasis exprs (Loc.source loc) in
       Graphql_statement.doc cx ast
     with Graphql_parse.SyntaxError loc ->
-      Flow_error.(add_output cx (EGraphqlParse loc));
+      Flow.add_output cx (Flow_error.EGraphqlParse loc);
       VoidT.at loc)
 
   | TaggedTemplate {

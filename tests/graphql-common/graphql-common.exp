@@ -40,9 +40,14 @@ get-data.js:35
 
 get-variables.js:5
   5: ({storyID: 123, inc: 1}: $GraphqlVars<typeof likeStory>); // number ~> string
-                ^^^ number. This type is incompatible with
+      ^^^^^^^^^^^^^^^^^^^^^^ object literal. This type is incompatible with
   5: ({storyID: 123, inc: 1}: $GraphqlVars<typeof likeStory>); // number ~> string
-                                           ^^^^^^^^^^^^^^^^ string
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ GraphQL `mutation`
+  Property `storyID` is incompatible:
+      5: ({storyID: 123, inc: 1}: $GraphqlVars<typeof likeStory>); // number ~> string
+                    ^^^ number. This type is incompatible with
+      5: ({storyID: 123, inc: 1}: $GraphqlVars<typeof likeStory>); // number ~> string
+                                               ^^^^^^^^^^^^^^^^ string
 
 get-variables.js:6
   6: ({storyID: '123'}: $GraphqlVars<typeof likeStory>); // prop `inc` not found
