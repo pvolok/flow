@@ -32,6 +32,14 @@ directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
 
 directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
 
+directive @on_query on QUERY
+directive @on_mutation on MUTATION
+directive @on_subscription on SUBSCRIPTION
+directive @on_field on FIELD
+directive @on_fragment_definition on FRAGMENT_DEFINITION
+directive @on_fragment_spread on FRAGMENT_SPREAD
+directive @on_inline_fragment on INLINE_FRAGMENT
+
 schema {
   mutation: Mutation
 }

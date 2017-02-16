@@ -18,3 +18,18 @@ const stories = query(gql`
   merged: string,
   inlineFragSkipped: ?string,
 |}>);
+
+gql`
+  query @on_query {
+    version @on_field
+    ... on Query @on_inline_fragment { __typename }
+  }
+`;
+gql`mutation @on_mutation { likeStory(storyID: "1", inc: 1) }`;
+gql`
+  fragment on Story @on_fragment_definition {
+    id
+  }
+`;
+
+gql`query @on_field { version }`; // error: FIELD directory not allowed here

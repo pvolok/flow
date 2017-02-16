@@ -1,3 +1,7 @@
+directives.js:35
+ 35: gql`query @on_field { version }`; // error: FIELD directory not allowed here
+               ^^^^^^^^^ Directive `on_field` is not allowed in this location
+
 get-data.js:11
  11: (story.tags: Array<string>); // `tags` is maybe type
       ^^^^^^^^^^ null. This type is incompatible with
@@ -67,4 +71,4 @@ var-definitions.js:5
                   ^^^^ This type is already non-null
 
 
-Found 12 errors
+Found 13 errors
