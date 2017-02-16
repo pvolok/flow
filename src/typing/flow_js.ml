@@ -5143,7 +5143,7 @@ let rec __flow cx ((l: Type.t), (u: Type.use_t)) trace =
       let u =
         if arr then begin
           let t = mk_tvar cx r in
-          rec_flow_t cx trace (ArrT (r, t, []), out);
+          rec_flow_t cx trace (ArrT (r, ArrayAT (t, None)), out);
           GraphqlToDataT (r, t)
         end else u
       in
@@ -5166,7 +5166,7 @@ let rec __flow cx ((l: Type.t), (u: Type.use_t)) trace =
           in
           wrap t
         | Graphql_schema.Type.List t ->
-          wrap (ArrT (r, conv_type_ref r t, []))
+          wrap (ArrT (r, ArrayAT (conv_type_ref r t, None)))
         | Graphql_schema.Type.NonNull t -> conv_type_ref ~non_null:true r t
       in
       let get_props type_name selections = SMap.map (fun field ->
@@ -5248,7 +5248,7 @@ let rec __flow cx ((l: Type.t), (u: Type.use_t)) trace =
       let {Graphql.frag_type; frag_schema = schema; frag_selection; _} = frag in
       let {Graphql.s_on; _} = s in
       if not (Graphql_schema.do_types_overlap schema s_on frag_type) then (
-        add_output cx trace
+        add_output cx ~trace
           (FlowError.EGraphqlIncompatibleSpread (reason, s_on, frag_type));
         rec_flow_t cx trace (st, out)
       ) else (
@@ -9858,11 +9858,6 @@ and react_kit =
  * implement that without wrapping Flow_js with a functor. So I just always
  * pass this record with functions. *)
 and gql =
-  let add_output cx ?trace msg =
-    match trace with
-    | Some trace -> add_output cx trace msg
-    | None -> FlowError.add_output cx msg
-  in
   { Graphql_flow.
     flow = flow_opt;
     flow_t = flow_opt_t;

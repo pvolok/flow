@@ -220,23 +220,23 @@ known-argument-names.js:20
 
 known-argument-names.js:71
  71:     doesKnowCommand(unknown: true) # error
-                         ^^^^^^^ Field does not have argument `unknown`
+                         ^^^^^^^ Argument `unknown` is not found
 
 known-argument-names.js:78
  78:     doesKnowCommand(whoknows: 1, dogCommand: SIT, unknown: true) # 2 errors
-                         ^^^^^^^^ Field does not have argument `whoknows`
+                         ^^^^^^^^ Argument `whoknows` is not found
 
 known-argument-names.js:78
  78:     doesKnowCommand(whoknows: 1, dogCommand: SIT, unknown: true) # 2 errors
-                                                       ^^^^^^^ Field does not have argument `unknown`
+                                                       ^^^^^^^ Argument `unknown` is not found
 
 known-argument-names.js:86
  86:       doesKnowCommand(unknown: true) # error
-                           ^^^^^^^ Field does not have argument `unknown`
+                           ^^^^^^^ Argument `unknown` is not found
 
 known-argument-names.js:91
  91:           doesKnowCommand(unknown: true) # error
-                               ^^^^^^^ Field does not have argument `unknown`
+                               ^^^^^^^ Argument `unknown` is not found
 
 known-type-names.js:17
  17:   query Foo($var: JumbledUpLetters) { # error

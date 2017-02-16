@@ -38,6 +38,10 @@ directive @onInputObject on INPUT_OBJECT
 
 directive @onInputFieldDefinition on INPUT_FIELD_DEFINITION
 
+directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
 type Alien implements Being, Intelligent {
   iq: Int
   name(surname: Boolean): String

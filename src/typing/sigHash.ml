@@ -85,6 +85,10 @@ type hash =
   | TypeMapH
   | ReposH
   | ReposUpperH
+  | GraphqlOpH
+  | GraphqlFragH
+  | GraphqlSelectionH
+  | GraphqlFieldH
 
 let hash_of_ctor = Type.(function
   | OpenT _ -> failwith "undefined hash of OpenT"
@@ -114,6 +118,10 @@ let hash_of_ctor = Type.(function
   | FunProtoCallT _ -> FunProtoCallH
   | FunProtoT _ -> FunProtoH
   | FunT _ -> FunH
+  | GraphqlOpT _ -> GraphqlOpH
+  | GraphqlFragT _ -> GraphqlFragH
+  | GraphqlSelectionT _ -> GraphqlSelectionH
+  | GraphqlFieldT _ -> GraphqlFieldH
   | IdxWrapper _ -> IdxWrapperH
   | IntersectionT _ -> IntersectionH
   | KeysT _ -> KeysH

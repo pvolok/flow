@@ -113,7 +113,7 @@ and do_definition cx schema def =
       GraphqlOpT (reason, operation)
     | None ->
       let loc = Option.value op_loc ~default:Loc.none in
-      Flow_error.(add_output cx (EGraphqlUndefOp (loc, op_name)));
+      Flow.add_output cx (Flow_error.EGraphqlUndefOp (loc, op_name));
       EmptyT.why reason
     )
   | _ ->
@@ -139,17 +139,17 @@ and do_vars_decl cx schema var_defs =
         | Schema.Type.InputObj _
           -> Some (Schema.Type.Named name)
         | _ ->
-          Flow_error.(add_output cx (EGraphqlNotInputType (loc, name)));
+          Flow.add_output cx (Flow_error.EGraphqlNotInputType (loc, name));
           None
       else (
-        Flow_error.(add_output cx (EGraphqlTypeNotFound (loc, name)));
+        Flow.add_output cx (Flow_error.EGraphqlTypeNotFound (loc, name));
         None
       )
     | Ast.Type.List (_, t) ->
       Option.map ~f:(fun t -> Schema.Type.List t) (conv t)
     | Ast.Type.NonNull (loc, Ast.Type.NonNull _) ->
       (* `Type!!` *)
-      Flow_error.(add_output cx (EGraphqlDoubleNonNull loc));
+      Flow.add_output cx (Flow_error.EGraphqlDoubleNonNull loc);
       None
     | Ast.Type.NonNull (_, t) ->
       Option.map ~f:(fun t -> Schema.Type.NonNull t) (conv t)
@@ -164,7 +164,7 @@ and do_vars_decl cx schema var_defs =
       match conv type_ with
       | Some t ->
         if SMap.mem name vars then (
-          Flow_error.(add_output cx (EGraphqlVarRedef (loc, name)));
+          Flow.add_output cx (Flow_error.EGraphqlVarRedef (loc, name));
           vars
         ) else SMap.add name t vars
       | None -> vars
@@ -313,11 +313,11 @@ and do_field_selection cx gcx schema type_name maybe loc selection_set =
     Some (mk_selection cx gcx schema type_name maybe selection_set)
   (* scalar { ... } *)
   | Some {Ast.SelectionSet.loc; _} ->
-    Flow_error.(add_output cx (EGraphqlNonObjSelect (loc, type_name)));
+    Flow.add_output cx (Flow_error.EGraphqlNonObjSelect (loc, type_name));
     None
   (* obj *)
   | None when (need_selection && (not gcx.relay_op)) ->
-    Flow_error.(add_output cx (EGraphqlObjNeedSelect (loc, type_name)));
+    Flow.add_output cx (Flow_error.EGraphqlObjNeedSelect (loc, type_name));
     None
   (* scalar *)
   | None -> None
@@ -493,4 +493,4 @@ and has_maybe_directive dirs =
   ) dirs
 
 and err cx loc msg =
-  Flow_error.(add_output cx (EGraphqlCustom (loc, msg)))
+  Flow.add_output cx (Flow_error.EGraphqlCustom (loc, msg))
