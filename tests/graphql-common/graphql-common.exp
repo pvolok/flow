@@ -71,9 +71,27 @@ get-variables.js:28
  28: (queryInfered.id: number); // string ~> number
                        ^^^^^^ number
 
+merge.js:11
+ 11:       a: name
+              ^^^^ Cannot merge different fields
+  7:       a: id
+              ^^ 
+
+merge.js:12
+ 12:       friends(first: 1) { name }
+           ^^^^^^^ Cannot merge fields as they have different arguments.
+  8:       friends { id }
+           ^^^^^^^ 
+
+merge.js:29
+ 29:         a: id # error: Different fields.
+                ^^ Cannot merge different fields
+ 22:         a: text
+                ^^^^ 
+
 var-definitions.js:5
   5:   query($id: ID!!) { # error
                   ^^^^ This type is already non-null
 
 
-Found 13 errors
+Found 16 errors
