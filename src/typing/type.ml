@@ -1284,9 +1284,11 @@ and Graphql : sig
     sf_alias: string; (* alias or name *)
     sf_name: string;
     sf_type: Graphql_schema.Type.t;
+    sf_args: Graphql_schema.Value.t SMap.t;
     sf_maybe: bool;
     sf_selection: TypeTerm.t option;
     sf_directives: directive list;
+    sf_loc: Loc.t;
   }
 
   and selection = {

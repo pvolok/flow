@@ -122,6 +122,8 @@ type error_message =
   | EGraphqlDoubleNonNull of Loc.t
   | EGraphqlNotInputType of Loc.t * string
   | EGraphqlVarRedef of Loc.t * string
+  | EGraphqlMergeNames of Loc.t * Loc.t
+  | EGraphqlMergeArgs of Loc.t * Loc.t
   | EGraphqlCustom of Loc.t * string
 
 and binding_error =
@@ -1057,5 +1059,17 @@ let rec error_of_msg cx ~trace_reasons =
 
     | EGraphqlVarRedef (loc, name) ->
         mk_error [loc, [spf "There can be only one variable named `%s`" name]]
+
+    | EGraphqlMergeNames (loc1, loc2) ->
+        mk_error [
+          loc2, ["Cannot merge different fields"];
+          loc1, [];
+        ]
+
+    | EGraphqlMergeArgs (loc1, loc2) ->
+        mk_error [
+          loc2, ["Cannot merge fields as they have different arguments."];
+          loc1, [];
+        ]
 
     | EGraphqlCustom (loc, msg) -> mk_error [loc, [msg]]

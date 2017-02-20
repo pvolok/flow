@@ -208,7 +208,7 @@ and select cx gcx schema selection type_name maybe selections =
         if Graphql_flow.check_field flow cx schema type_name fname floc then (
           let field_type =
             Schema.find_field_type schema type_name fname in
-          let _fields_args =
+          let field_args =
             let field_def = (Schema.find_field schema type_name fname) in
             let args_def = field_def.Schema.Field.args in
             let args = Option.value args ~default:[] in
@@ -227,9 +227,11 @@ and select cx gcx schema selection type_name maybe selections =
             sf_alias = Option.value_map alias ~default:fname ~f:(fun (_, x) -> x);
             sf_name = fname;
             sf_type = field_type;
+            sf_args = field_args;
             sf_maybe = maybe;
             sf_selection = field_selection;
             sf_directives = dirs;
+            sf_loc = floc;
           } in
           let field = GraphqlFieldT (reason, field) in
           Hashtbl.replace (Context.type_table cx) floc field;

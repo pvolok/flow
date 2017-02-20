@@ -250,6 +250,36 @@ known-type-names.js:23
  23:   fragment PetFields on Peettt { # error
                              ^^^^^^ Type `Peettt` not found in schema
 
+overlapping-fields-can-be-merged.js:63
+ 63:     fido: nickname # error: Different fields.
+               ^^^^^^^^ Cannot merge different fields
+ 62:     fido: name
+               ^^^^ 
+
+overlapping-fields-can-be-merged.js:85
+ 85:     name # error: Different fields.
+         ^^^^ Cannot merge different fields
+ 84:     name: nickname
+               ^^^^^^^^ 
+
+overlapping-fields-can-be-merged.js:93
+ 93:     doesKnowCommand(dogCommand: HEEL) # error: Different arguments.
+         ^^^^^^^^^^^^^^^ Cannot merge fields as they have different arguments.
+ 92:     doesKnowCommand
+         ^^^^^^^^^^^^^^^ 
+
+overlapping-fields-can-be-merged.js:101
+101:     doesKnowCommand # error: Different arguments.
+         ^^^^^^^^^^^^^^^ Cannot merge fields as they have different arguments.
+100:     doesKnowCommand(dogCommand: SIT)
+         ^^^^^^^^^^^^^^^ 
+
+overlapping-fields-can-be-merged.js:109
+109:     doesKnowCommand(dogCommand: HEEL) # error: Different arguments.
+         ^^^^^^^^^^^^^^^ Cannot merge fields as they have different arguments.
+108:     doesKnowCommand(dogCommand: SIT)
+         ^^^^^^^^^^^^^^^ 
+
 possible-fragment-spreads.js:76
  76:     ... on Dog { barkVolume } # error
          ^^^^^^^^^^^^^^^^^^^^^^^^^ inline fragment. Fragment cannot be spread here as objects of type `Cat` can never be of type `Dog`
@@ -335,4 +365,4 @@ variables-are-input-types.js:12
                                                   ^^^ Type `Pet` is not a correct input type
 
 
-Found 84 errors
+Found 89 errors

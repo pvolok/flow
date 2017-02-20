@@ -3,15 +3,26 @@ type Query {
   version: String
 }
 
-type Story {
+type User implements Node {
+  id: ID!
+  name: String!
+  friends(first: Int): [User!]
+}
+
+type Story implements Node {
   id: ID!
   text: String!
   tags: [String!]
+  author: User
 }
 
-type Event {
+type Event implements Node {
   id: ID!
   date: String
+}
+
+interface Node {
+  id: ID!
 }
 
 union StoryOrEvent = Story | Event

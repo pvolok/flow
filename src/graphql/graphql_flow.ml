@@ -77,24 +77,71 @@ and conv_values_map mk_obj schema reason vars =
 (* Merging *)
 (***********)
 
-let check_field_selection _field = true
+let same_fields flow cx ?trace f1 f2 =
+  let open Graphql in
+  if f1.sf_name <> f2.sf_name then (
+    let msg = FlowError.EGraphqlMergeNames (f1.sf_loc, f2.sf_loc) in
+    flow.add_output cx ?trace msg;
+    false
+  ) else true
+
+let compare_smap equals a b =
+  let exist_and_equal key value1 =
+    SMap.mem key b && equals value1 (SMap.find key b)
+  in
+  let exists key _ = SMap.mem key a in
+  SMap.for_all exist_and_equal a && SMap.for_all exists b
+
+let rec value_equal v1 v2 =
+  let open Graphql_schema.Value in
+  match (v1, v2) with
+  | Invalid, _ -> true
+  | _, Invalid -> true
+  | Variable a, Variable b -> a = b
+  | Int a, Int b -> a = b
+  | Float a, Float b -> a = b
+  | String a, String b -> a = b
+  | Bool a, Bool b -> a = b
+  | Null, Null -> true
+  | Enum a, Enum b -> a = b
+  | List a, List b ->
+      List.length a = List.length b
+      && List.for_all2 value_equal a b
+  | Object a, Object b ->
+      compare_smap value_equal a b
+  | _, _ -> false
+
+let same_args flow cx ?trace f1 f2 = Graphql.(
+  if compare_smap value_equal f1.sf_args f2.sf_args then true
+  else (
+    let msg = FlowError.EGraphqlMergeArgs (f1.sf_loc, f2.sf_loc) in
+    flow.add_output cx ?trace msg;
+    false
+  )
+)
 
 let merge_field flow cx ?trace f1 f2 = Graphql.(
   (* TODO: validate args *)
-  let selection =
-    match f1.sf_selection, f2.sf_selection with
-    | Some s1, Some s2 ->
-      let reason = reason_of_t s2 in
-      let new_s = flow.mk_tvar cx (reason_of_t s1) in
-      flow.flow cx ?trace (s1, GraphqlSelectT (reason, SelectFrag s2, new_s));
-      Some new_s;
-    | (s, _) -> s
+  let can_merge =
+    same_fields flow cx ?trace f1 f2 &&
+    same_args flow cx ?trace f1 f2
   in
-  {
-    f1 with
-    sf_maybe = f1.sf_maybe && f2.sf_maybe;
-    sf_selection = selection;
-  }
+  if can_merge then (
+    let selection =
+      match f1.sf_selection, f2.sf_selection with
+      | Some s1, Some s2 ->
+        let reason = reason_of_t s2 in
+        let new_s = flow.mk_tvar cx (reason_of_t s1) in
+        flow.flow cx ?trace (s1, GraphqlSelectT (reason, SelectFrag s2, new_s));
+        Some new_s;
+      | (s, _) -> s
+    in
+    {
+      f1 with
+      sf_maybe = f1.sf_maybe && f2.sf_maybe;
+      sf_selection = selection;
+    }
+  ) else f1
 )
 
 let merge_fun flow cx ?trace _ f1 f2 =
