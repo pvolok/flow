@@ -2215,3 +2215,18 @@ let dump_flow_error =
         spf "EReactKit (%s, %s, _)"
           (dump_reason cx reason1)
           (dump_reason cx reason2)
+    | EGraphqlParse _ -> "EGraphqlParse"
+    | EGraphqlTypeNotFound _ -> "EGraphqlTypeNotFound"
+    | EGraphqlFieldNotFound _ -> "EGraphqlFieldNotFound"
+    | EGraphqlNonObjSelect _ -> "EGraphqlNonObjSelect"
+    | EGraphqlObjNeedSelect _ -> "EGraphqlObjNeedSelect"
+    | EGraphqlUnionSelect _ -> "EGraphqlUnionSelect"
+    | EGraphqlIncompatibleSpread _ -> "EGraphqlIncompatibleSpread"
+    | EGraphqlFragOnNonComposite _ -> "EGraphqlFragOnNonComposite"
+    | EGraphqlUndefOp _ -> "EGraphqlUndefOp"
+    | EGraphqlDoubleNonNull _ -> "EGraphqlDoubleNonNull"
+    | EGraphqlNotInputType _ -> "EGraphqlNotInputType"
+    | EGraphqlVarRedef _ -> "EGraphqlVarRedef"
+    | EGraphqlMergeNames _ -> "EGraphqlMergeNames"
+    | EGraphqlMergeArgs _ -> "EGraphqlMergeArgs"
+    | EGraphqlCustom _ -> "EGraphqlCustom"

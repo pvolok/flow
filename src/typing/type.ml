@@ -1730,6 +1730,10 @@ let any_propagating_use_t = function
   | UnifyT _
   | UseT _
   | VarianceCheckT _
+  | GraphqlSelectT _
+  | GraphqlSpreadT _
+  | GraphqlToDataT _
+  | GraphqlToVarsT _
     -> false
 
 

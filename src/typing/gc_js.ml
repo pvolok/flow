@@ -370,6 +370,8 @@ and gc_destructor cx state = function
   | NonMaybeType -> ()
   | PropertyType _ -> ()
   | Bind t -> gc cx state t
+  | GraphqlData -> ()
+  | GraphqlVars -> ()
 
 and gc_pred cx state = function
 

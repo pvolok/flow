@@ -5153,7 +5153,7 @@ let rec __flow cx ((l: Type.t), (u: Type.use_t)) trace =
       GraphqlToDataT (_, out)
       ->
       let rec conv_type_ref ?non_null:(non_null=false) r t =
-        let wrap t = if non_null then t else MaybeT t in
+        let wrap t = if non_null then t else MaybeT (r, t) in
         match t with
         | Graphql_schema.Type.Named name ->
           let t = match name with

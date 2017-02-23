@@ -170,7 +170,7 @@ let init_graphql options =
           ~out_channel:stdout
           ~flags:(Options.error_flags options)
           ~strip_root:(Some (Options.root options))
-          [error];
+          (Errors.ErrorSet.singleton error);
       | _ ->
         Flow_logger.log "[ERROR]")
   | None -> ()

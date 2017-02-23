@@ -377,7 +377,7 @@ module OptionParser(Config : CONFIG) = struct
       );
       opt_haste_use_name_reducers = FlowConfig.(
         flowconfig.options.Opts.haste_use_name_reducers
-      )
+      );
 
       opt_graphql_config;
     } in

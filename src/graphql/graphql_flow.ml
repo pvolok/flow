@@ -44,7 +44,7 @@ let check_field flow cx schema parent_type name loc =
 
 let rec conv_val_ ?non_null:(non_null=true) mk_obj schema reason value =
   let module T = Graphql_schema.Type in
-  let wrap v = if non_null then MaybeT v else v in
+  let wrap v = if non_null then MaybeT (reason, v) else v in
   match value with
   | T.Named name ->
     let value = match Graphql_schema.type_def schema name with

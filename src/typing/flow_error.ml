@@ -113,7 +113,6 @@ type error_message =
   | EIncompatibleWithUseOp of reason * reason * use_op
   | EUnsupportedImplements of reason
   | EReactKit of (reason * reason) * React.tool
-  | EIncompatibleObject of reason * reason * use_op
   | EGraphqlParse of Loc.t
   | EGraphqlTypeNotFound of Loc.t * string
   | EGraphqlFieldNotFound of Loc.t * string
