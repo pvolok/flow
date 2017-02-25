@@ -1,7 +1,7 @@
 // @flow
 
 const React = require('react');
-const Relay = require('./relay');
+const Relay = require('react-relay');
 
 class Statefull extends React.Component {
   render() {
@@ -11,7 +11,7 @@ class Statefull extends React.Component {
   }
 }
 
-const StatefullR = Relay.createComponent(Statefull, {
+const StatefullR = Relay.createContainer(Statefull, {
   fragments: {
     user: () => Relay.QL`
       fragment on Story {

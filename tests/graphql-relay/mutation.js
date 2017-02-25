@@ -1,8 +1,8 @@
 // @flow
 
-import {Mutation} from './relay';
+import Relay from 'react-relay';
 
-class MyMutation extends Mutation {
+class MyMutation extends Relay.Mutation {
   static fragments = {
     story: () => Relay.QL`fragment on Story {id}`,
   };

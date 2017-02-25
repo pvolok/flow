@@ -116,7 +116,8 @@ WATCH_FILES=\
   'src/**/*.mll'\
   'src/**/*.mly'\
   'hack/**/*.ml'\
-  'hack/**/*.mli'
+  'hack/**/*.mli'\
+  'lib/*.js'
 
 FILES_TO_COPY=\
   $(wildcard lib/*.js)
@@ -187,7 +188,7 @@ build-flow-debug: $(BUILT_OBJECT_FILES) $(FLOWLIB)
 	mkdir -p bin
 	cp _build/src/flow.d.byte bin/flow
 
-fast-build: $(OCP_BUILD_FILES) random-build-id
+fast-build: $(FLOWLIB) $(OCP_BUILD_FILES) random-build-id
 	[ -d _obuild ] || ocp-build init
 	ocp-build make flow -njobs 8 -byte flow
 	rm -f $(OCP_BUILD_FILES)

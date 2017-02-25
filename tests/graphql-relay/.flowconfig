@@ -1,2 +1,3 @@
 [options]
 graphql_config=graphqlrc.json
+no_flowlib=false
